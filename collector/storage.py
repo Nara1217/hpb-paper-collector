@@ -7,6 +7,7 @@
   data/
     papers/YYYY-MM-DD.jsonl   수집일별 논문 (한 줄 = 논문 1편, schema/paper.schema.json 형식)
     index.json                id → 파일 경로 (중복 방지 + 빠른 조회)
+    reports/YYYY-MM-DD.md     사람이 훑어볼 일일 보고서 (AI 요약 없음)
     runs/<timestamp>.json     실행 기록 (기간, 소스별 건수, 오류)
 """
 from __future__ import annotations
@@ -31,6 +32,14 @@ class Storage(ABC):
 
     @abstractmethod
     def save_run_log(self, log: dict[str, Any]) -> None: ...
+
+    @abstractmethod
+    def save_report(self, batch_date: str, markdown: str) -> None:
+        """사람이 볼 일일 보고서를 저장합니다."""
+
+    @abstractmethod
+    def papers_for_batch(self, batch_date: str) -> list[Paper]:
+        """해당 수집일에 저장된 논문 전체."""
 
     @abstractmethod
     def iter_papers(self, only_unclassified: bool = False) -> Iterator[Paper]: ...
@@ -96,6 +105,12 @@ class LocalJSONStorage(Storage):
     def save_run_log(self, log: dict[str, Any]) -> None:
         name = log["started_at"].replace(":", "").replace("+", "_")
         _atomic_write(self.root / "runs" / f"{name}.json", json.dumps(log, ensure_ascii=False, indent=2))
+
+    def save_report(self, batch_date: str, markdown: str) -> None:
+        _atomic_write(self.root / "reports" / f"{batch_date}.md", markdown)
+
+    def papers_for_batch(self, batch_date: str) -> list[Paper]:
+        return [Paper.from_dict(d) for d in self._read_file(f"papers/{batch_date}.jsonl")]
 
     def iter_papers(self, only_unclassified: bool = False) -> Iterator[Paper]:
         for f in sorted(self.papers_dir.glob("*.jsonl")):

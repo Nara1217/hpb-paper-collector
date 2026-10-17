@@ -120,3 +120,17 @@ def test_run_end_to_end_with_fake_sources(tmp_path, monkeypatch):
     assert rep["sources"]["biorxiv"] == {"fetched": 2, "matched": 1, "new": 1}
     assert rep["errors"] and "medrxiv" in rep["errors"][0]
     assert list((tmp_path / "runs").glob("*.json"))
+    md = next((tmp_path / "reports").glob("*.md")).read_text()
+    assert "총 2편" in md and "Single-cell atlas" in md and "Sleep and CSF" not in md
+    # 같은 날 다시 실행해도 보고서에는 그날 전체 논문이 유지됨
+    run(CFG, st, date(2026, 10, 14), date(2026, 10, 15))
+    assert "총 2편" in next((tmp_path / "reports").glob("*.md")).read_text()
+
+
+def test_report_escapes_and_empty():
+    from collector.report import build_daily_report
+    p = to_paper(dict(BIORXIV_ITEM, title="A | B"), "biorxiv")
+    kf().apply(p)
+    md = build_daily_report([p], "2026-10-17")
+    assert "A \\| B" in md and "<details>" in md
+    assert "새 논문이 없습니다" in build_daily_report([], "2026-10-17")

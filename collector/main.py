@@ -18,6 +18,7 @@ import requests
 import yaml
 
 from .filter import KeywordFilter
+from .report import build_daily_report
 from .sources import PreprintSource, PubMedSource
 from .storage import LocalJSONStorage
 
@@ -65,6 +66,8 @@ def run(cfg: dict, storage, start: date, end: date, dry_run: bool = False) -> di
     if not dry_run:
         today = datetime.now(timezone.utc).date().isoformat()
         report["saved"] = storage.save_papers(list(kept.values()), today)
+        # 같은 날 여러 번 실행해도 그날 저장된 전체 논문으로 보고서를 다시 만듭니다.
+        storage.save_report(today, build_daily_report(storage.papers_for_batch(today), today))
         report["finished_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
         storage.save_run_log(report)
     else:

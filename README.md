@@ -43,6 +43,7 @@ python -m collector --start 2026-09-01 --end 2026-09-30
 | 경로 | 내용 |
 |---|---|
 | `papers/YYYY-MM-DD.jsonl` | 그날 수집한 논문. 한 줄이 한 편이고, 형식은 `schema/paper.schema.json`을 따릅니다. |
+| `reports/YYYY-MM-DD.md` | 사람이 훑어보기 위한 일일 보고서입니다. 수집 건수, 논문 목록 표, 접어 둔 초록 미리보기가 들어 있고 AI 요약은 없습니다. GitHub에서 열면 보기 좋게 표시됩니다. |
 | `index.json` | 논문 id → 파일 경로. 중복을 막고 빠르게 찾는 데 씁니다. |
 | `runs/<시각>.json` | 실행 기록: 기간, 소스별로 가져온 수·키워드 일치 수·신규 수, 오류 |
 
@@ -76,11 +77,13 @@ for p in store.iter_papers(only_unclassified=True):
 
 ## 저장 위치 바꾸기
 
-수집기와 에이전트는 `collector/storage.py`의 `Storage` 인터페이스만 사용합니다. GitHub, Google Drive, DB 등으로 옮길 때는 다음 다섯 메서드를 구현한 클래스를 하나 추가하고, `main.py`에서 그 클래스를 쓰도록 바꾸면 됩니다.
+수집기와 에이전트는 `collector/storage.py`의 `Storage` 인터페이스만 사용합니다. GitHub, Google Drive, DB 등으로 옮길 때는 다음 메서드를 구현한 클래스를 하나 추가하고, `main.py`에서 그 클래스를 쓰도록 바꾸면 됩니다.
 
 - `seen_ids`
 - `save_papers`
 - `save_run_log`
+- `save_report`
+- `papers_for_batch`
 - `iter_papers`
 - `set_classification`
 
