@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "paper.schema.json",
+  "title": "Paper (v1.0)",
+  "description": "data/papers/*.jsonl의 한 줄. 수집기가 classification을 제외한 모든 칸을 채우고, 분류 에이전트가 classification을 채웁니다.",
+  "type": "object",
+  "required": ["id", "source", "title", "abstract", "authors", "date", "url",
+               "is_preprint", "matched_cancer", "matched_topics", "collected_at", "schema_version"],
+  "properties": {
+    "id": {"type": "string", "description": "doi:<소문자 DOI> 또는 pmid:<PMID>. 출처가 달라도 같은 논문이면 같은 값"},
+    "source": {"enum": ["pubmed", "biorxiv", "medrxiv"]},
+    "title": {"type": "string"},
+    "abstract": {"type": "string", "description": "PubMed 구조화 초록은 'LABEL: 내용' 줄들로 합쳐짐"},
+    "authors": {"type": "array", "items": {"type": "string"}},
+    "date": {"type": "string", "description": "YYYY-MM-DD. PubMed는 등록일(entrez), 프리프린트는 게시일"},
+    "url": {"type": "string"},
+    "doi": {"type": ["string", "null"]},
+    "pmid": {"type": ["string", "null"]},
+    "journal": {"type": ["string", "null"], "description": "프리프린트는 서버 이름"},
+    "is_preprint": {"type": "boolean"},
+    "category": {"type": ["string", "null"], "description": "bioRxiv/medRxiv 카테고리 (예: cancer biology)"},
+    "version": {"type": ["string", "null"]},
+    "published_doi": {"type": ["string", "null"], "description": "프리프린트가 저널에 출판된 경우 그 DOI"},
+    "publication_types": {"type": "array", "items": {"type": "string"}, "description": "PubMed: Review, Journal Article 등"},
+    "matched_cancer": {"type": "array", "items": {"enum": ["HCC", "biliary_tract", "pancreatic"]}},
+    "matched_topics": {"type": "array", "items": {"enum": ["organoid", "single_cell", "spatial",
+      "tumor_microenvironment", "drug_resistance", "drug_screening"]}},
+    "matched_keywords": {"type": "array", "items": {"type": "string"}, "description": "실제로 걸린 키워드 (1차 필터 근거)"},
+    "collected_at": {"type": "string", "description": "UTC ISO 8601"},
+    "schema_version": {"const": "1.0"},
+    "classification": {
+      "type": ["object", "null"],
+      "description": "분류 에이전트 영역. 수집 시점에는 null. 형식은 자유지만 아래 칸을 권장",
+      "properties": {
+        "classified_by": {"type": "string"},
+        "classified_at": {"type": "string"},
+        "relevance": {"type": "number", "description": "0~10"},
+        "labels": {"type": "array", "items": {"type": "string"}},
+        "model_systems": {"type": "array", "items": {"type": "string"}, "description": "예: PDO, PDX, KPC GEMM, cell line, patient cohort"},
+        "validation": {"type": "array", "items": {"type": "string"}, "description": "예: scRNA-seq→mIF, in vitro→in vivo, independent cohort"},
+        "summary": {"type": "string"}
+      }
+    }
+  }
+}

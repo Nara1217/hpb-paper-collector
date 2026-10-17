@@ -1,0 +1,47 @@
+# 간담췌암 논문 수집 설정
+# - 논문은 "암종 키워드 1개 이상" AND "주제 키워드 1개 이상"이 제목/초록에 있어야 수집됩니다.
+# - 소문자로 쓴 키워드는 대소문자 무시 + 뒤에 붙는 글자 허용 (organoid → organoids, organoid-based)
+# - 띄어쓰기 없는 대문자 약어(HCC, PDAC, TAM, scRNA-seq 등)는 대소문자 구분 + 복수형 s만 허용 (TAM → TAMs, 단 "tamoxifen"은 제외)
+# - 공백과 하이픈은 같은 것으로 취급 ("single cell" = "single-cell")
+
+cancers:
+  HCC: ["hepatocellular carcinoma", "hepatocellular cancer", "HCC", "liver cancer", "hepatoma"]
+  biliary_tract: ["cholangiocarcinoma", "CCA", "iCCA", "eCCA", "pCCA", "dCCA",
+                  "biliary tract cancer", "biliary tract carcinoma", "biliary cancer",
+                  "bile duct cancer", "gallbladder cancer", "gallbladder carcinoma", "BTC"]
+  pancreatic: ["pancreatic cancer", "pancreatic ductal adenocarcinoma", "pancreatic adenocarcinoma",
+               "pancreatic carcinoma", "PDAC"]
+
+topics:
+  organoid: ["organoid", "tumoroid", "assembloid", "PDO", "patient-derived organoid"]
+  single_cell: ["single-cell", "single cell", "single-nucleus", "scRNA-seq", "snRNA-seq",
+                "scATAC", "CITE-seq", "scRNA"]
+  spatial: ["spatial transcriptom", "spatial omic", "spatial proteom", "spatial multi-omic",
+            "Visium", "Xenium", "CosMx", "MERFISH", "imaging mass cytometry", "CODEX"]
+  tumor_microenvironment: ["tumor microenvironment", "tumour microenvironment", "TME",
+                           "cancer-associated fibroblast", "CAF", "tumor-associated macrophage",
+                           "tumour-associated macrophage", "TAM", "immunosuppress", "desmoplas",
+                           "T cell exhaustion", "exhausted T", "tumor immune", "tumour immune"]
+  drug_resistance: ["drug resistan", "drug-resistant", "multidrug resistan", "chemoresistan",
+                    "chemo-resistan", "chemotherapy resistan", "therapy resistan", "therapeutic resistan",
+                    "treatment resistan", "immunotherapy resistan", "acquired resistan",
+                    "resistance to", "resistant to", "drug toleran", "drug-tolerant persister",
+                    "sorafenib resistan", "lenvatinib resistan", "gemcitabine resistan",
+                    "oxaliplatin resistan", "cisplatin resistan", "FOLFIRINOX resistan", "5-FU resistan"]
+  drug_screening: ["drug screen", "high-throughput screen", "compound screen", "CRISPR screen",
+                   "genetic screen", "drug repurposing", "drug repositioning", "drug sensitivity",
+                   "drug response prediction", "pharmacogenomic"]
+
+sources:
+  pubmed:
+    enabled: true
+    # NCBI 권장: 연락 가능한 이메일. API 키는 환경변수 NCBI_API_KEY로 넣으면 속도 제한이 완화됩니다.
+    email: ""
+    max_results: 5000   # 암종 키워드로만 넓게 검색하므로 넉넉하게
+  biorxiv:
+    enabled: true
+    # 비워두면 전체 카테고리에서 키워드로 거릅니다. 예: ["cancer biology", "bioinformatics", "genomics"]
+    categories: []
+  medrxiv:
+    enabled: true
+    categories: []   # 예: ["oncology"]
