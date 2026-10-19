@@ -75,6 +75,21 @@ for p in store.iter_papers(only_unclassified=True):
 
 `classification` 안의 권장 칸은 스키마 파일에 있습니다. 예시 코드는 `examples/classify_agent_example.py`에 있습니다.
 
+### LLM 에이전트로 분류할 때 (응답 중단 방지)
+
+LLM이 분류 결과를 쓰다가 응답이 안전 필터에 걸려 끊길 수 있습니다. 주로 초록 원문을 응답에 길게 옮겨 적거나(저작권 필터), 한 번에 너무 많은 논문을 처리할 때 생깁니다. 그래서 `collector.classify` 도구로 작은 묶음씩 처리합니다. 에이전트용 규칙은 `CLAUDE.md`(= `AGENTS.md`)에 있습니다.
+
+```bash
+python -m collector.classify status               # 전체/대기/완료/건너뜀 수
+python -m collector.classify next --size 5        # 다음 5편 (JSON)
+python -m collector.classify apply results.json   # 결과 JSON 저장 (- 를 주면 표준입력)
+python -m collector.classify skip <id> --reason "응답 중단 반복"
+```
+
+- `apply`는 결과를 검사합니다. `summary`가 초록과 연속 8단어 이상 같으면 비우고, 300자를 넘으면 자릅니다. 고친 내용은 `classification.warnings`에 남습니다.
+- 묶음마다 바로 저장하므로 중간에 끊겨도 그 묶음만 다시 하면 됩니다.
+- 수집 단계에서 초록 끝의 저작권·라이선스 문구(© …, All rights reserved 등)를 떼어 냅니다.
+
 ## 저장 위치 바꾸기
 
 수집기와 에이전트는 `collector/storage.py`의 `Storage` 인터페이스만 사용합니다. GitHub, Google Drive, DB 등으로 옮길 때는 다음 메서드를 구현한 클래스를 하나 추가하고, `main.py`에서 그 클래스를 쓰도록 바꾸면 됩니다.
