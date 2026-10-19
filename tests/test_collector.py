@@ -134,3 +134,41 @@ def test_report_escapes_and_empty():
     md = build_daily_report([p], "2026-10-17")
     assert "A \\| B" in md and "<details>" in md
     assert "새 논문이 없습니다" in build_daily_report([], "2026-10-17")
+
+
+def test_clean_abstract_strips_copyright():
+    from collector.models import clean_abstract
+    assert clean_abstract("RESULTS: ok.\nCONCLUSION: fine. © 2026 Elsevier Inc. All rights reserved.") == \
+        "RESULTS: ok.\nCONCLUSION: fine."
+    assert clean_abstract("No notice here.") == "No notice here."
+
+
+def test_classify_batch_apply_and_guards(tmp_path):
+    from collector.classify import apply_results, next_batch, parse_results, skip
+    store = LocalJSONStorage(tmp_path)
+    abstract = ("We profiled lenvatinib resistant hepatocellular carcinoma organoids using "
+                "single cell RNA sequencing and found a stem like subpopulation.")
+    papers = [Paper(id=f"pmid:{i}", source="pubmed", title=f"T{i}", abstract=abstract, authors=[],
+                    date="2026-10-19", url="u", matched_topics=["organoid"]) for i in range(7)]
+    store.save_papers(papers, "2026-10-19")
+
+    b = next_batch(store, size=5)
+    assert len(b["papers"]) == 5 and b["remaining_after_this"] == 2
+
+    llm_out = "결과입니다\n```json\n" + json.dumps([
+        {"id": "pmid:0", "relevance": "8", "labels": "organoid", "summary": "간암 오가노이드의 약물 내성 연구"},
+        {"id": "pmid:1", "relevance": 99, "summary": abstract},        # 원문 복사 → summary 비움
+        {"id": "pmid:2", "summary": "가" * 500},                       # 너무 김 → 자름
+        {"id": "pmid:x"},                                              # 모르는 id
+    ], ensure_ascii=False) + "\n```"
+    res = apply_results(store, parse_results(llm_out))
+    assert res["saved"] == 3 and res["remaining"] == 4 and res["errors"]
+    got = {p.id: p.classification for p in store.iter_papers() if p.classification}
+    assert got["pmid:0"]["relevance"] == 8 and got["pmid:0"]["labels"] == ["organoid"]
+    assert got["pmid:1"]["summary"] == "" and got["pmid:1"]["relevance"] == 10
+    assert len(got["pmid:2"]["summary"]) <= 301
+
+    # 이미 분류된 것은 덮어쓰지 않음
+    assert apply_results(store, [{"id": "pmid:0", "summary": "x"}])["saved"] == 0
+    skip(store, "pmid:3", "응답 중단")
+    assert [p["id"] for p in next_batch(store, size=5)["papers"]] == ["pmid:4", "pmid:5", "pmid:6"]
