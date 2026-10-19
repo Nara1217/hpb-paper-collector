@@ -11,7 +11,7 @@ from datetime import date
 
 import requests
 
-from ..models import Paper, make_id
+from ..models import Paper, clean_abstract, make_id
 
 log = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ def to_paper(it: dict, server: str) -> Paper:
         id=make_id(doi, None),
         source=server,
         title=" ".join((it.get("title") or "").split()),
-        abstract=" ".join((it.get("abstract") or "").split()),
+        abstract=clean_abstract(" ".join((it.get("abstract") or "").split())),
         authors=authors,
         date=it.get("date", ""),
         url=f"https://www.{server}.org/content/{doi}v{ver}",

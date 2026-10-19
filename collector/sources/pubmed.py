@@ -12,7 +12,7 @@ from datetime import date
 
 import requests
 
-from ..models import Paper, make_id
+from ..models import Paper, clean_abstract, make_id
 
 log = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ def parse_article(art) -> Paper | None:
         label = ab.get("Label")
         txt = _text(ab)
         parts.append(f"{label}: {txt}" if label else txt)
-    abstract = "\n".join(p for p in parts if p)
+    abstract = clean_abstract("\n".join(p for p in parts if p))
 
     authors = []
     for au in (a.findall("AuthorList/Author") if a is not None else []):
