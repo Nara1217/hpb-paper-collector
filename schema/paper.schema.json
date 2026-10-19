@@ -32,13 +32,16 @@
       "type": ["object", "null"],
       "description": "분류 에이전트 영역. 수집 시점에는 null. 형식은 자유지만 아래 칸을 권장",
       "properties": {
+        "status": {"enum": ["done", "skipped"], "description": "skipped: 응답 중단 등으로 분류하지 못하고 건너뜀"},
         "classified_by": {"type": "string"},
         "classified_at": {"type": "string"},
         "relevance": {"type": "number", "description": "0~10"},
         "labels": {"type": "array", "items": {"type": "string"}},
         "model_systems": {"type": "array", "items": {"type": "string"}, "description": "예: PDO, PDX, KPC GEMM, cell line, patient cohort"},
         "validation": {"type": "array", "items": {"type": "string"}, "description": "예: scRNA-seq→mIF, in vitro→in vivo, independent cohort"},
-        "summary": {"type": "string"}
+        "summary": {"type": "string", "maxLength": 301, "description": "한국어 1~2문장, 자기 말로. 초록 원문 복사 금지"},
+        "warnings": {"type": "array", "items": {"type": "string"}, "description": "apply가 결과를 고친 내용"},
+        "reason": {"type": "string", "description": "skipped일 때 이유"}
       }
     }
   }
