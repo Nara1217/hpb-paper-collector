@@ -48,6 +48,12 @@ class Storage(ABC):
     def set_classification(self, paper_id: str, classification: dict[str, Any]) -> None:
         """분류 에이전트가 결과를 기록할 때 사용합니다."""
 
+    def set_classifications(self, updates: dict[str, dict[str, Any]]) -> int:
+        """여러 편을 한 번에 기록합니다. 기본 구현은 한 편씩 저장합니다."""
+        for pid, c in updates.items():
+            self.set_classification(pid, c)
+        return len(updates)
+
 
 def _atomic_write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -123,12 +129,22 @@ class LocalJSONStorage(Storage):
                 yield Paper.from_dict(d)
 
     def set_classification(self, paper_id: str, classification: dict[str, Any]) -> None:
-        rel = self.index.get(paper_id)
-        if rel is None:
-            raise KeyError(paper_id)
-        rows = self._read_file(rel)
-        for r in rows:
-            if r["id"] == paper_id:
-                r["classification"] = classification
-                break
-        self._write_file(rel, rows)
+        self.set_classifications({paper_id: classification})
+
+    def set_classifications(self, updates: dict[str, dict[str, Any]]) -> int:
+        """파일별로 한 번만 읽고 써서, 묶음 단위로 원자적으로 저장합니다."""
+        by_file: dict[str, dict[str, dict[str, Any]]] = {}
+        for pid, c in updates.items():
+            rel = self.index.get(pid)
+            if rel is None:
+                raise KeyError(pid)
+            by_file.setdefault(rel, {})[pid] = c
+        saved = 0
+        for rel, items in by_file.items():
+            rows = self._read_file(rel)
+            for r in rows:
+                if r["id"] in items:
+                    r["classification"] = items[r["id"]]
+                    saved += 1
+            self._write_file(rel, rows)
+        return saved

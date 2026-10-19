@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from .models import Paper
+from .models import Paper, clean_abstract
 
 CANCER_KO = {"HCC": "간세포암", "biliary_tract": "담도암", "pancreatic": "췌장암"}
 TOPIC_KO = {
@@ -65,7 +65,7 @@ def build_daily_report(papers: list[Paper], batch_date: str) -> str:
     out += ["", "## 초록 미리보기", ""]
     for i, p in enumerate(papers, 1):
         venue = p.journal or SOURCE_KO.get(p.source, p.source)
-        abstract = " ".join(p.abstract.split())
+        abstract = " ".join(clean_abstract(p.abstract).split())
         excerpt = abstract[:EXCERPT] + ("…" if len(abstract) > EXCERPT else "")
         out += [
             "<details>",
